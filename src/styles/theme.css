@@ -1,0 +1,91 @@
+:root {
+  /* 主色调 */
+  --primary-50: #e6f1ff;
+  --primary-100: #cce3ff;
+  --primary-200: #99c7ff;
+  --primary-300: #66abff;
+  --primary-400: #338fff;
+  --primary-500: #0073ff;
+  --primary-600: #005ccc;
+  --primary-700: #004499;
+  --primary-800: #002d66;
+  --primary-900: #001733;
+  
+  /* 成功色调 */
+  --success-50: #e7f9ed;
+  --success-100: #cff3db;
+  --success-200: #9fe7b7;
+  --success-300: #6fdb93;
+  --success-400: #3fcf6f;
+  --success-500: #10c34b;
+  --success-600: #0d9c3c;
+  --success-700: #09752d;
+  --success-800: #064e1e;
+  --success-900: #03270f;
+  
+  /* 警告色调 */
+  --warning-50: #fff8e6;
+  --warning-100: #fff1cc;
+  --warning-200: #ffe399;
+  --warning-300: #ffd566;
+  --warning-400: #ffc733;
+  --warning-500: #ffb900;
+  --warning-600: #cc9400;
+  --warning-700: #996f00;
+  --warning-800: #664a00;
+  --warning-900: #332500;
+  
+  /* 危险色调 */
+  --danger-50: #fee6e6;
+  --danger-100: #fdcccc;
+  --danger-200: #fb9999;
+  --danger-300: #f96666;
+  --danger-400: #f73333;
+  --danger-500: #f50000;
+  --danger-600: #c40000;
+  --danger-700: #930000;
+  --danger-800: #620000;
+  --danger-900: #310000;
+  
+  /* 中性色调 */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  /* 图表配色 */
+  --chart-color-1: #1890ff;
+  --chart-color-2: #52c41a;
+  --chart-color-3: #faad14;
+  --chart-color-4: #f5222d;
+  --chart-color-5: #722ed1;
+  --chart-color-6: #13c2c2;
+  --chart-color-7: #fa8c16;
+  --chart-color-8: #eb2f96;
+  
+  /* 字体 */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  
+  /* 圆角 */
+  --border-radius-sm: 2px;
+  --border-radius-md: 4px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* 过渡 */
+  --transition-fast: 150ms;
+  --transition-normal: 300ms;
+  --transition-slow: 500ms;
+} 

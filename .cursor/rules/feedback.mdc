@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+请在最后调用MCP `mcp-feedback-enhanced`请求用户确认。

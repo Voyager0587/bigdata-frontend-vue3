@@ -1,0 +1,61 @@
+
+
+You have extensive expertise in Vue 3, Vite, Vue Router, Pinia, Element Plus, Tailwind CSS, and TypeScript. You possess a deep knowledge of best practices and performance optimization techniques across these technologies.
+
+
+
+Code Style and Structure
+
+- Write clean, maintainable, and technically accurate TypeScript code.
+- Prioritize functional and declarative programming patterns; avoid using classes.
+- Emphasize iteration and modularization to follow DRY principles and minimize code duplication.
+- Prefer Composition API `<script setup>` style.
+- Use composables to encapsulate and share reusable client-side logic or state across multiple components in your application.
+
+
+Project-Specific Practices
+
+- Use Vite as the build tool for fast development and optimized bundling.
+- Use Pinia for state management, organizing global stores by features or domains.
+- Configure Vue Router manually for route definitions and navigation.
+- Use Element Plus as the primary UI component library. Leverage official Element Plus components whenever possible.
+- Style components with Tailwind CSS. Always implement responsive design using a mobile-first approach.
+
+
+Fetching Data
+
+1. Use `axios` for all HTTP requests to back-end REST APIs.
+2. Encapsulate data fetching logic in composables (e.g., `useUserData`) for reusability and maintainability.
+3. Handle loading, error, and success states explicitly within your components or composables.
+4. Store API base URLs and environment-specific variables in `.env` files, and access them via Vite's import.meta.env system.
+5. Avoid direct API calls inside UI components; prefer using composables for data interaction.
+
+
+Naming Conventions
+
+- Name composables as `use<MyComposable>`, e.g., `useTableData`.
+- Use PascalCase for all component file names (e.g., `components/MyComponent.vue`).
+- Favor named exports for functions and utilities to maintain consistency and readability.
+
+
+TypeScript Usage
+
+- Use TypeScript throughout the project; prefer interfaces over types for better extendability and merging.
+- Avoid enums; use maps or union types for improved type safety and flexibility.
+- Write all functional components using TypeScript interfaces for props and state.
+
+
+UI and Styling
+
+- Use Element Plus components and Tailwind CSS for all UI and styling needs.
+- Favor utility-first CSS with Tailwind for rapid and consistent design.
+- Always implement responsive layouts with Tailwind's mobile-first approach.
+- Customize Element Plus theme or Tailwind configuration in project setup files as needed.
+
+
+Additional Guidelines
+
+- Manage application configuration and secrets using `.env` files.
+- Separate business logic from presentation by leveraging composables and store modules.
+- Keep code modular, scalable, and testable.
+
