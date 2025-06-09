@@ -2,13 +2,16 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDashboardStore } from '../../stores'
-import { Location, Reading, OfficeBuilding, Money, Refresh, DataLine } from '@element-plus/icons-vue'
+import { Location, Reading, OfficeBuilding, Money, Refresh, DataLine, Download } from '@element-plus/icons-vue'
 import BaseChart from '../../components/charts/BaseChart.vue'
 import LoadingState from '../../components/LoadingState.vue'
 import ErrorMessage from '../../components/ErrorMessage.vue'
 import DataCard from '../../components/DataCard.vue'
 import type { EChartsOption } from 'echarts/types/dist/shared'
 import echarts from '../../utils/echarts'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const dashboardStore = useDashboardStore()
@@ -176,6 +179,109 @@ const formattedLastUpdated = computed(() => {
   return formatDate(dashboardStore.lastUpdated)
 })
 
+// 导出城市分布数据
+const exportCityData = () => {
+  try {
+    if (!dashboardStore.cityDistribution) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+
+    const { cities, counts } = dashboardStore.cityDistribution
+    
+    // 城市分布数据
+    const cityData = cities.map((city, index) => ({
+      '城市': city,
+      '职位数量': counts[index]
+    }))
+    
+    // 创建工作簿和工作表
+    const workbook = XLSX.utils.book_new()
+    const citySheet = XLSX.utils.json_to_sheet(cityData)
+    
+    XLSX.utils.book_append_sheet(workbook, citySheet, '城市分布数据')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `城市分布数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
+// 导出薪资区间分布数据
+const exportSalaryData = () => {
+  try {
+    if (!dashboardStore.salaryDistribution) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+
+    const { salary_ranges, counts } = dashboardStore.salaryDistribution
+    
+    // 薪资区间数据
+    const salaryData = salary_ranges.map((range, index) => ({
+      '薪资区间': range,
+      '职位数量': counts[index],
+      '占比': `${((counts[index] / dashboardStore.totalJobs) * 100).toFixed(2)}%`
+    }))
+    
+    // 创建工作簿和工作表
+    const workbook = XLSX.utils.book_new()
+    const salarySheet = XLSX.utils.json_to_sheet(salaryData)
+    
+    XLSX.utils.book_append_sheet(workbook, salarySheet, '薪资区间分布数据')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `薪资区间分布数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
+// 导出高薪行业排行数据
+const exportIndustryData = () => {
+  try {
+    if (!dashboardStore.industrySalaryData) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+
+    // 使用已排序的行业薪资数据
+    const industryData = dashboardStore.sortedIndustrySalaryData.map((item, index) => ({
+      '排名': index + 1,
+      '行业': item.industry,
+      '平均薪资(元)': item.salary,
+      '平均薪资(K)': (item.salary / 1000).toFixed(1) + 'K'
+    }))
+    
+    // 创建工作簿和工作表
+    const workbook = XLSX.utils.book_new()
+    const industrySheet = XLSX.utils.json_to_sheet(industryData)
+    
+    XLSX.utils.book_append_sheet(workbook, industrySheet, '高薪行业排行数据')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `高薪行业排行数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
 onMounted(() => {
   if (!dashboardStore.lastUpdated) {
     refreshData()
@@ -250,9 +356,14 @@ onMounted(() => {
         <template #header>
           <div class="flex justify-between items-center">
             <span>城市分布</span>
-            <el-button type="primary" link @click="navigateToDetail('/city')">
-              查看详情
-            </el-button>
+            <div class="flex items-center">
+              <el-button type="primary" size="small" @click="exportCityData" :disabled="!dashboardStore.cityDistribution" class="mr-2">
+                <el-icon><Download /></el-icon> 导出数据
+              </el-button>
+              <el-button type="primary" link @click="navigateToDetail('/city')">
+                查看详情
+              </el-button>
+            </div>
           </div>
         </template>
         <LoadingState :loading="dashboardStore.isLoading" skeleton>
@@ -264,9 +375,14 @@ onMounted(() => {
         <template #header>
           <div class="flex justify-between items-center">
             <span>薪资区间分布</span>
-            <el-button type="primary" link @click="navigateToDetail('/salary')">
-              查看详情
-            </el-button>
+            <div class="flex items-center">
+              <el-button type="primary" size="small" @click="exportSalaryData" :disabled="!dashboardStore.salaryDistribution" class="mr-2">
+                <el-icon><Download /></el-icon> 导出数据
+              </el-button>
+              <el-button type="primary" link @click="navigateToDetail('/salary')">
+                查看详情
+              </el-button>
+            </div>
           </div>
         </template>
         <LoadingState :loading="dashboardStore.isLoading" skeleton>
@@ -297,9 +413,14 @@ onMounted(() => {
                 />
               </el-select>
             </div>
-            <el-button type="primary" link @click="navigateToDetail('/company')">
-              查看详情
-            </el-button>
+            <div class="flex items-center">
+              <el-button type="primary" size="small" @click="exportIndustryData" :disabled="!dashboardStore.industrySalaryData" class="mr-2">
+                <el-icon><Download /></el-icon> 导出数据
+              </el-button>
+              <el-button type="primary" link @click="navigateToDetail('/company')">
+                查看详情
+              </el-button>
+            </div>
           </div>
         </template>
         <LoadingState :loading="dashboardStore.isLoading" skeleton>

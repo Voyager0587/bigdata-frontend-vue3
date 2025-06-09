@@ -29,11 +29,6 @@
 - [x] 创建API模块（城市、学历、薪资、公司）
 - [x] 实现请求拦截器和响应拦截器
 - [x] 创建错误处理机制
-- [ ] 封装薪资热力图接口（/salary-city-heatmap）
-- [ ] 封装公司规模与薪资关系接口（/company-size-salary）
-- [ ] 封装城市与学历交叉分析接口（/city-education-analysis）
-- [ ] 封装薪资区间详细分布接口（/salary-detailed-distribution）
-- [ ] 封装城市招聘职位对比接口（/city-comparison）
 
 ### 5. 状态管理配置
 - [x] 配置Pinia

@@ -78,6 +78,11 @@ const educationSalaryChartOptions = computed<any>(() => {
   }
 
   const { education_levels, avg_salaries, min_salaries, max_salaries } = salaryStore.salaryChartData
+  
+  // 计算Y轴最大值，确保有足够空间显示数据标签
+  const allSalaries = [...avg_salaries, ...min_salaries, ...max_salaries];
+  const maxSalary = Math.max(...allSalaries.filter(val => typeof val === 'number' && !isNaN(val)));
+  const yAxisMax = Math.ceil(maxSalary * 1.2); // 增加20%的空间
 
   return {
     title: {
@@ -88,6 +93,17 @@ const educationSalaryChartOptions = computed<any>(() => {
       trigger: 'axis',
       axisPointer: {
         type: 'shadow'
+      },
+      formatter: function(params: any) {
+        let result = params[0].name + '<br/>';
+        params.forEach((item: any) => {
+          if (typeof item.value === 'number') {
+            result += item.seriesName + ': ' + item.value.toLocaleString() + ' 元<br/>';
+          } else {
+            result += item.seriesName + ': ' + item.value + '<br/>';
+          }
+        });
+        return result;
       }
     },
     legend: {
@@ -96,9 +112,9 @@ const educationSalaryChartOptions = computed<any>(() => {
     },
     grid: {
       left: '3%',
-      right: '4%',
+      right: '6%',  // 增加右侧空间
       bottom: '8%',
-      top: '20%',
+      top: '25%',   // 增加顶部空间
       containLabel: true
     },
     xAxis: {
@@ -111,7 +127,16 @@ const educationSalaryChartOptions = computed<any>(() => {
     },
     yAxis: {
       type: 'value',
-      name: '薪资 (K)'
+      name: '薪资 (元)',
+      max: yAxisMax,
+      axisLabel: {
+        formatter: (value: number) => {
+          if (value >= 10000) {
+            return (value / 10000).toFixed(0) + '万';
+          }
+          return value.toLocaleString();
+        }
+      }
     },
     series: [
       {
@@ -126,7 +151,9 @@ const educationSalaryChartOptions = computed<any>(() => {
           position: 'top',
           formatter: (params: any) => {
             if (typeof params.value === 'number') {
-              return (params.value / 1000).toFixed(2) + 'K';
+              return params.value >= 10000 
+                ? (params.value / 10000).toFixed(1) + '万' 
+                : (params.value / 1000).toFixed(1) + 'K';
             }
             return params.value;
           }
@@ -138,6 +165,18 @@ const educationSalaryChartOptions = computed<any>(() => {
         data: min_salaries,
         itemStyle: {
           color: '#91cc75'
+        },
+        label: {
+          show: true,
+          position: 'top',
+          formatter: (params: any) => {
+            if (typeof params.value === 'number') {
+              return params.value >= 10000 
+                ? (params.value / 10000).toFixed(1) + '万' 
+                : (params.value / 1000).toFixed(1) + 'K';
+            }
+            return params.value;
+          }
         }
       },
       {
@@ -146,6 +185,18 @@ const educationSalaryChartOptions = computed<any>(() => {
         data: max_salaries,
         itemStyle: {
           color: '#ee6666'
+        },
+        label: {
+          show: true,
+          position: 'top',
+          formatter: (params: any) => {
+            if (typeof params.value === 'number') {
+              return params.value >= 10000 
+                ? (params.value / 10000).toFixed(1) + '万' 
+                : (params.value / 1000).toFixed(1) + 'K';
+            }
+            return params.value;
+          }
         }
       }
     ]

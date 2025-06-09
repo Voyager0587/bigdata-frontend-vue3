@@ -10,6 +10,9 @@ import CityComparisonConfig from '../../components/CityComparisonConfig.vue'
 import { Download, Refresh } from '@element-plus/icons-vue'
 import * as echarts from 'echarts/core'
 import type { EChartsOption } from 'echarts/types/dist/shared'
+import * as XLSX from 'xlsx'
+import { saveAs } from 'file-saver'
+import { ElMessage } from 'element-plus'
 
 const cityStore = useCityStore()
 const limitValue = ref(10)
@@ -135,7 +138,306 @@ const refreshData = () => {
 
 // 导出数据
 const exportData = () => {
-  cityStore.exportCityData()
+  try {
+    if (!cityStore.cityDistribution.length) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+    
+    // 城市分布数据
+    const cityData = cityStore.cityDistribution.map(city => ({
+      '城市': city.工作地点,
+      '职位数量': city.count,
+      '占比': ((city.count / cityStore.totalJobs) * 100).toFixed(2) + '%'
+    }))
+    
+    // 创建工作簿和工作表
+    const workbook = XLSX.utils.book_new()
+    const citySheet = XLSX.utils.json_to_sheet(cityData)
+    
+    XLSX.utils.book_append_sheet(workbook, citySheet, '城市分布数据')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `城市招聘分布数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
+// 导出城市招聘数量排名数据
+const exportCityRankingData = () => {
+  try {
+    if (!cityStore.topCities.length) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+    
+    // 城市排名数据
+    const rankingData = cityStore.topCities.map((city, index) => ({
+      '排名': index + 1,
+      '城市': city.工作地点,
+      '职位数量': city.count,
+      '占比': ((city.count / cityStore.totalJobs) * 100).toFixed(2) + '%'
+    }))
+    
+    // 创建工作簿和工作表
+    const workbook = XLSX.utils.book_new()
+    const rankingSheet = XLSX.utils.json_to_sheet(rankingData)
+    
+    XLSX.utils.book_append_sheet(workbook, rankingSheet, '城市招聘数量排名')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `城市招聘数量排名-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
+// 导出城市招聘分布数据
+const exportCityDistributionData = () => {
+  try {
+    if (!cityStore.cityChartData) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+    
+    const { cities, counts } = cityStore.cityChartData
+    
+    // 城市分布数据
+    const distributionData = cities.map((city, index) => ({
+      '城市': city,
+      '职位数量': counts[index],
+      '占比': ((counts[index] / counts.reduce((a, b) => a + b, 0)) * 100).toFixed(2) + '%'
+    }))
+    
+    // 创建工作簿和工作表
+    const workbook = XLSX.utils.book_new()
+    const distributionSheet = XLSX.utils.json_to_sheet(distributionData)
+    
+    XLSX.utils.book_append_sheet(workbook, distributionSheet, '城市招聘分布')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `城市招聘分布数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
+// 导出城市薪资热力图数据
+const exportHeatmapData = () => {
+  try {
+    if (!cityStore.salaryCityHeatmap) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+    
+    const { cities, salary_ranges, heatmap_data } = cityStore.salaryCityHeatmap
+    
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new()
+    
+    // 热力图数据
+    const heatmapData = []
+    
+    // 添加表头（薪资区间）
+    const header = ['城市', ...salary_ranges]
+    heatmapData.push(header)
+    
+    // 添加每个城市的数据
+    cities.forEach((city, cityIndex) => {
+      const row = [city]
+      salary_ranges.forEach((_, salaryIndex) => {
+        row.push(heatmap_data[cityIndex][salaryIndex].toString())
+      })
+      heatmapData.push(row)
+    })
+    
+    // 创建工作表
+    const heatmapSheet = XLSX.utils.aoa_to_sheet(heatmapData)
+    
+    XLSX.utils.book_append_sheet(workbook, heatmapSheet, '城市薪资热力图')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `城市薪资热力图数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
+// 导出城市对比数据
+const exportCityComparisonData = () => {
+  try {
+    if (!cityStore.cityComparison) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+    
+    const { cities, counts, percentages, salary_comparison } = cityStore.cityComparison
+    
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new()
+    
+    // 城市对比数据
+    const comparisonData = cities.map((city, index) => ({
+      '城市': city,
+      '职位数量': counts[index],
+      '占比': percentages[index].toFixed(2) + '%',
+      '平均薪资': salary_comparison[city].avg,
+      '最低薪资': salary_comparison[city].min,
+      '最高薪资': salary_comparison[city].max
+    }))
+    
+    // 创建工作表
+    const comparisonSheet = XLSX.utils.json_to_sheet(comparisonData)
+    
+    XLSX.utils.book_append_sheet(workbook, comparisonSheet, '城市对比数据')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `城市对比数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
+// 导出城市公司规模分布对比数据
+const exportCityCompanySizeData = () => {
+  try {
+    if (!cityStore.rawComparisonData || !cityStore.cityComparison) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+    
+    const { cities } = cityStore.cityComparison
+    const { company_size_distribution } = cityStore.rawComparisonData
+    
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new()
+    
+    // 获取所有公司规模类别
+    const allSizes = Array.from(
+      new Set(
+        Object.values(company_size_distribution)
+          .flatMap(cityData => Object.keys(cityData as Record<string, number>))
+      )
+    )
+    
+    // 城市公司规模分布数据
+    const companySizeData = []
+    
+    // 添加表头
+    const header = ['城市', ...allSizes]
+    companySizeData.push(header)
+    
+    // 添加每个城市的数据
+    cities.forEach(city => {
+      const row = [city]
+      const cityData = company_size_distribution[city] || {}
+      
+      allSizes.forEach(size => {
+        row.push((cityData[size] || 0).toString())
+      })
+      
+      companySizeData.push(row)
+    })
+    
+    // 创建工作表
+    const companySizeSheet = XLSX.utils.aoa_to_sheet(companySizeData)
+    
+    XLSX.utils.book_append_sheet(workbook, companySizeSheet, '城市公司规模分布')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `城市公司规模分布数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
+}
+
+// 导出城市教育程度分布对比数据
+const exportCityEducationData = () => {
+  try {
+    if (!cityStore.rawComparisonData || !cityStore.cityComparison) {
+      ElMessage.warning('没有可导出的数据')
+      return
+    }
+    
+    const { cities } = cityStore.cityComparison
+    const { education_distribution } = cityStore.rawComparisonData
+    
+    // 创建工作簿
+    const workbook = XLSX.utils.book_new()
+    
+    // 获取所有教育程度类别
+    const allEducations = Array.from(
+      new Set(
+        Object.values(education_distribution)
+          .flatMap(cityData => Object.keys(cityData as Record<string, number>))
+      )
+    )
+    
+    // 城市教育程度分布数据
+    const educationData = []
+    
+    // 添加表头
+    const header = ['城市', ...allEducations]
+    educationData.push(header)
+    
+    // 添加每个城市的数据
+    cities.forEach(city => {
+      const row = [city]
+      const cityData = education_distribution[city] || {}
+      
+      allEducations.forEach(edu => {
+        row.push((cityData[edu] || 0).toString())
+      })
+      
+      educationData.push(row)
+    })
+    
+    // 创建工作表
+    const educationSheet = XLSX.utils.aoa_to_sheet(educationData)
+    
+    XLSX.utils.book_append_sheet(workbook, educationSheet, '城市教育程度分布')
+    
+    // 生成Excel文件并下载
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    saveAs(blob, `城市教育程度分布数据-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    ElMessage.success('数据导出成功')
+  } catch (error) {
+    console.error('导出数据失败', error)
+    ElMessage.error('导出数据失败')
+  }
 }
 
 // 监听limitValue变化
@@ -252,7 +554,18 @@ onMounted(async () => {
       <template #header>
         <div class="flex justify-between items-center">
           <span>城市招聘数量排名</span>
-          <span class="text-sm text-gray-500">显示前 {{ limitValue }} 个城市</span>
+          <div class="flex items-center">
+            <el-button 
+              type="primary" 
+              size="small" 
+              @click="exportCityRankingData" 
+              :disabled="cityStore.isLoading || !cityStore.topCities.length"
+              class="mr-2"
+            >
+              <el-icon><Download /></el-icon> 导出数据
+            </el-button>
+            <span class="text-sm text-gray-500">显示前 {{ limitValue }} 个城市</span>
+          </div>
         </div>
       </template>
       <LoadingState :loading="cityStore.isLoading" skeleton>
@@ -266,7 +579,18 @@ onMounted(async () => {
         <template #header>
           <div class="flex justify-between items-center">
             <span>城市招聘分布图表</span>
-            <span class="text-sm text-gray-500">显示前 {{ limitValue }} 个城市</span>
+            <div class="flex items-center">
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click="exportCityDistributionData" 
+                :disabled="cityStore.isLoading || !cityStore.cityChartData"
+                class="mr-2"
+              >
+                <el-icon><Download /></el-icon> 导出数据
+              </el-button>
+              <span class="text-sm text-gray-500">显示前 {{ limitValue }} 个城市</span>
+            </div>
           </div>
         </template>
         <LoadingState :loading="cityStore.isLoading" skeleton>
@@ -296,6 +620,15 @@ onMounted(async () => {
           <div class="flex justify-between items-center">
             <span>城市薪资热力图</span>
             <div class="flex items-center">
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click="exportHeatmapData" 
+                :disabled="cityStore.isHeatmapLoading || !cityStore.salaryCityHeatmap"
+                class="mr-2"
+              >
+                <el-icon><Download /></el-icon> 导出数据
+              </el-button>
               <span class="text-sm text-gray-500 mr-2">显示前 {{ cityStore.heatmapLimit }} 个城市</span>
               <el-button 
                 :icon="Refresh" 
@@ -349,9 +682,20 @@ onMounted(async () => {
           <template #header>
             <div class="flex justify-between items-center">
               <span>城市招聘数据对比</span>
-              <span class="text-sm text-gray-500">
-                {{ cityStore.cityComparison?.cities.join(' vs ') }}
-              </span>
+              <div class="flex items-center">
+                <el-button 
+                  type="primary" 
+                  size="small" 
+                  @click="exportCityComparisonData" 
+                  :disabled="cityStore.isComparisonLoading || !cityStore.cityComparison"
+                  class="mr-2"
+                >
+                  <el-icon><Download /></el-icon> 导出数据
+                </el-button>
+                <span class="text-sm text-gray-500">
+                  {{ cityStore.cityComparison?.cities.join(' vs ') }}
+                </span>
+              </div>
             </div>
           </template>
           <ErrorMessage 
@@ -385,6 +729,14 @@ onMounted(async () => {
           <template #header>
             <div class="flex justify-between items-center">
               <span>城市公司规模分布对比</span>
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click="exportCityCompanySizeData" 
+                :disabled="cityStore.isComparisonLoading || !cityStore.rawComparisonData"
+              >
+                <el-icon><Download /></el-icon> 导出数据
+              </el-button>
             </div>
           </template>
           <LoadingState :loading="cityStore.isComparisonLoading" skeleton>
@@ -397,6 +749,14 @@ onMounted(async () => {
           <template #header>
             <div class="flex justify-between items-center">
               <span>城市教育程度分布对比</span>
+              <el-button 
+                type="primary" 
+                size="small" 
+                @click="exportCityEducationData" 
+                :disabled="cityStore.isComparisonLoading || !cityStore.rawComparisonData"
+              >
+                <el-icon><Download /></el-icon> 导出数据
+              </el-button>
             </div>
           </template>
           <LoadingState :loading="cityStore.isComparisonLoading" skeleton>
