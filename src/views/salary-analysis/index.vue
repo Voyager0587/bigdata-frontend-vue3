@@ -321,68 +321,6 @@ const salaryByEducationChartOptions = computed<any>(() => {
   }
 })
 
-// 按薪资区间分组的学历分布图表配置
-const educationBySalaryChartOptions = computed<any>(() => {
-  if (!salaryStore.salaryDistributionByRange) {
-    return {}
-  }
-
-  const apiData = salaryStore.salaryDistributionByRange
-  const salaryRanges = apiData.salary_ranges || []
-  const educationLevels = apiData.education_levels || []
-  
-  const series = salaryRanges.map((range: string, rangeIndex: number) => ({
-    name: range,
-    type: 'bar' as const,
-    stack: 'total',
-    emphasis: {
-      focus: 'series'
-    },
-    data: educationLevels.map((edu: string, eduIndex: number) => {
-       // 确保 apiData.data[rangeIndex] 和 apiData.data[rangeIndex][eduIndex] 存在
-      return apiData.data?.[rangeIndex]?.[eduIndex]?.count || 0;
-    })
-  }))
-
-  return {
-    title: {
-      text: '按薪资区间分组的学历分布',
-      left: 'center'
-    },
-    tooltip: {
-      trigger: 'axis',
-      axisPointer: {
-        type: 'shadow'
-      }
-    },
-    legend: {
-      data: salaryRanges,
-      top: '10%',
-      type: 'scroll',
-      width: '80%'
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '8%',
-      top: '25%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      data: educationLevels,
-      axisLabel: {
-        interval: 0,
-        rotate: 30
-      }
-    },
-    yAxis: {
-      type: 'value'
-    },
-    series
-  }
-})
-
 // 薪资详细分布直方图配置
 const salaryHistogramOptions = computed<any>(() => {
   if (!salaryStore.salaryDetailedDistribution) {
@@ -535,7 +473,6 @@ const loadData = async () => {
       salaryStore.fetchSalaryChartData(),
       salaryStore.fetchHighSalaryChartData(),
       salaryStore.fetchSalaryDistributionByEducation(),
-      salaryStore.fetchSalaryDistributionByRange(),
       salaryStore.fetchSalaryDetailedDistribution()
     ])
   } catch (error) {
@@ -544,7 +481,7 @@ const loadData = async () => {
 }
 
 // 导出数据为Excel
-const exportToExcel = (type: 'distribution' | 'education' | 'highSalary') => {
+const exportToExcel = (type: 'distribution' | 'education' | 'highSalary' | 'byEducation') => {
   try {
     let data: any[] = []
     let fileName = ''
@@ -575,6 +512,29 @@ const exportToExcel = (type: 'distribution' | 'education' | 'highSalary') => {
         '占比': `${percentages[index].toFixed(2)}%`
       }))
       fileName = '高薪职位学历分布数据'
+    } else if (type === 'byEducation' && salaryStore.salaryDistributionByEducation) {
+      const apiData = salaryStore.salaryDistributionByEducation
+      const educationLevels = apiData.education_levels || []
+      const salaryRanges = apiData.salary_ranges || []
+      
+      // 创建包含所有薪资区间的表头
+      const headerRow: Record<string, string> = { '学历': '' }
+      salaryRanges.forEach((range: string) => {
+        headerRow[range] = ''
+      })
+      
+      // 为每个学历创建一行数据
+      data = educationLevels.map((education: string, eduIndex: number) => {
+        const row: Record<string, string | number> = { '学历': education }
+        
+        salaryRanges.forEach((range: string, rangeIndex: number) => {
+          row[range] = apiData.data?.[eduIndex]?.[rangeIndex]?.count || 0
+        })
+        
+        return row
+      })
+      
+      fileName = '按学历分组的薪资区间分布数据'
     }
 
     if (data.length > 0) {
@@ -676,41 +636,25 @@ onMounted(() => {
       </div>
     </el-card>
     
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- 按学历分组的薪资区间分布 -->
-      <el-card shadow="hover">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <span>按学历分组的薪资区间分布</span>
-          </div>
-        </template>
-        <div class="h-96">
-          <LoadingState v-if="salaryStore.salaryDistributionByEducationLoading" :loading="true" />
-          <ErrorMessage v-else-if="salaryStore.salaryDistributionByEducationError" :error="salaryStore.salaryDistributionByEducationError" />
-          <BaseChart v-else-if="salaryStore.salaryDistributionByEducation" :options="salaryByEducationChartOptions" height="100%" auto-resize />
-          <div v-else class="flex items-center justify-center h-full text-gray-400">
-            暂无按学历分组的薪资区间分布数据
-          </div>
+    <!-- 按学历分组的薪资区间分布 -->
+    <el-card shadow="hover" class="mb-6">
+      <template #header>
+        <div class="flex justify-between items-center">
+          <span>按学历分组的薪资区间分布</span>
+          <el-button type="primary" size="small" @click="exportToExcel('byEducation')" :disabled="!salaryStore.salaryDistributionByEducation">
+            <el-icon><Download /></el-icon> 导出数据
+          </el-button>
         </div>
-      </el-card>
-      
-      <!-- 按薪资区间分组的学历分布 -->
-      <el-card shadow="hover">
-        <template #header>
-          <div class="flex justify-between items-center">
-            <span>按薪资区间分组的学历分布</span>
-          </div>
-        </template>
-        <div class="h-96">
-          <LoadingState v-if="salaryStore.salaryDistributionByRangeLoading" :loading="true" />
-          <ErrorMessage v-else-if="salaryStore.salaryDistributionByRangeError" :error="salaryStore.salaryDistributionByRangeError" />
-          <BaseChart v-else-if="salaryStore.salaryDistributionByRange" :options="educationBySalaryChartOptions" height="100%" auto-resize />
-          <div v-else class="flex items-center justify-center h-full text-gray-400">
-            暂无按薪资区间分组的学历分布数据
-          </div>
+      </template>
+      <div class="h-96">
+        <LoadingState v-if="salaryStore.salaryDistributionByEducationLoading" :loading="true" />
+        <ErrorMessage v-else-if="salaryStore.salaryDistributionByEducationError" :error="salaryStore.salaryDistributionByEducationError" />
+        <BaseChart v-else-if="salaryStore.salaryDistributionByEducation" :options="salaryByEducationChartOptions" height="100%" auto-resize />
+        <div v-else class="flex items-center justify-center h-full text-gray-400">
+          暂无按学历分组的薪资区间分布数据
         </div>
-      </el-card>
-    </div>
+      </div>
+    </el-card>
     
     <!-- 不同学历薪资对比 -->
     <el-card shadow="hover" class="mt-6 mb-6">

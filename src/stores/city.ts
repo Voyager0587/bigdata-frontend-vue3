@@ -164,7 +164,8 @@ export const useCityStore = defineStore('city', () => {
     return {
       title: {
         text: '城市薪资热力图',
-        left: 'center'
+        left: 'center',
+        top: '3%'
       },
       tooltip: {
         position: 'top',
@@ -176,14 +177,19 @@ export const useCityStore = defineStore('city', () => {
         }
       },
       grid: {
-        height: '70%',
-        top: '15%'
+        height: '60%',
+        top: '20%',
+        bottom: '20%'  // 进一步增加底部边距
       },
       xAxis: {
         type: 'category',
         data: salary_ranges,
         splitArea: {
           show: true
+        },
+        axisLabel: {
+          interval: 0,
+          rotate: 30  // 旋转标签以避免重叠
         }
       },
       yAxis: {
@@ -199,7 +205,10 @@ export const useCityStore = defineStore('city', () => {
         calculable: true,
         orient: 'horizontal',
         left: 'center',
-        bottom: '5%'
+        top: '10%',  // 将visualMap移到顶部
+        textStyle: {
+          color: '#333'
+        }
       },
       series: [{
         name: '职位数量',

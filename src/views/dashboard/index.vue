@@ -360,9 +360,9 @@ onMounted(() => {
               <el-button type="primary" size="small" @click="exportCityData" :disabled="!dashboardStore.cityDistribution" class="mr-2">
                 <el-icon><Download /></el-icon> 导出数据
               </el-button>
-              <el-button type="primary" link @click="navigateToDetail('/city')">
-                查看详情
-              </el-button>
+            <el-button type="primary" link @click="navigateToDetail('/city')">
+              查看详情
+            </el-button>
             </div>
           </div>
         </template>
@@ -379,9 +379,9 @@ onMounted(() => {
               <el-button type="primary" size="small" @click="exportSalaryData" :disabled="!dashboardStore.salaryDistribution" class="mr-2">
                 <el-icon><Download /></el-icon> 导出数据
               </el-button>
-              <el-button type="primary" link @click="navigateToDetail('/salary')">
-                查看详情
-              </el-button>
+            <el-button type="primary" link @click="navigateToDetail('/salary')">
+              查看详情
+            </el-button>
             </div>
           </div>
         </template>
@@ -417,9 +417,9 @@ onMounted(() => {
               <el-button type="primary" size="small" @click="exportIndustryData" :disabled="!dashboardStore.industrySalaryData" class="mr-2">
                 <el-icon><Download /></el-icon> 导出数据
               </el-button>
-              <el-button type="primary" link @click="navigateToDetail('/company')">
-                查看详情
-              </el-button>
+            <el-button type="primary" link @click="navigateToDetail('/company')">
+              查看详情
+            </el-button>
             </div>
           </div>
         </template>

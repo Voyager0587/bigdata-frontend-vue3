@@ -116,30 +116,52 @@ const companySizeChartOptions = computed<any>(() => {
     },
     legend: {
       orient: 'vertical',
-      left: 'left',
-      top: 'middle',
-      data: sizes
+      left: 10,
+      top: 'center',
+      itemWidth: 10,
+      itemHeight: 10,
+      textStyle: {
+        fontSize: 12
+      }
     },
     series: [
       {
         name: '公司规模',
         type: 'pie',
-        radius: ['40%', '70%'],
-        center: ['60%', '50%'],
-        avoidLabelOverlap: false,
+        radius: ['30%', '60%'],  // 缩小饼图
+        center: ['55%', '50%'],  // 向左调整中心点
+        avoidLabelOverlap: true, // 避免标签重叠
         itemStyle: {
-          borderRadius: 10,
+          borderRadius: 6,
           borderColor: '#fff',
           borderWidth: 2
         },
         label: {
           show: true,
-          formatter: '{b}: {c} ({d}%)'
+          position: 'outside', // 标签放在外部
+          formatter: '{b}: {c}\n({d}%)', // 换行显示百分比
+          alignTo: 'edge',
+          edgeDistance: '10%',
+          lineHeight: 15,
+          rich: {
+            b: {
+              fontSize: 12,
+              lineHeight: 20
+            },
+            per: {
+              fontSize: 12,
+              color: '#666'
+            }
+          }
+        },
+        labelLine: {
+          length: 15,
+          length2: 10,
+          smooth: true
         },
         emphasis: {
           label: {
-            show: true,
-            fontSize: '16',
+            fontSize: 14,
             fontWeight: 'bold'
           }
         },

@@ -7,12 +7,14 @@ import LoadingState from '../../components/LoadingState.vue'
 import ErrorMessage from '../../components/ErrorMessage.vue'
 import FilterPanel from '../../components/FilterPanel.vue'
 import { useEducationStore } from '../../stores/education'
+import { useSalaryStore } from '../../stores/salary'
 import { saveAs } from 'file-saver'
 import * as XLSX from 'xlsx'
 import { Download, Refresh } from '@element-plus/icons-vue'
 
 const pageTitle = ref('招聘数据可视化平台 - 学历分析')
 const educationStore = useEducationStore()
+const salaryStore = useSalaryStore()
 const activeTab = ref('basic') // 'basic' 或 'advanced'
 const cityLimitValue = ref(5)
 
@@ -62,7 +64,7 @@ const educationChartOptions = computed<any>(() => {
         name: '学历分布',
         type: 'pie',
         radius: ['40%', '70%'],
-        center: ['60%', '50%'],
+        center: ['55%', '50%'],
         avoidLabelOverlap: false,
         itemStyle: {
           borderRadius: 10,
@@ -222,6 +224,86 @@ const educationSalaryChartOptions = computed<any>(() => {
   }
 })
 
+// 按薪资区间分组的学历分布图表配置
+const educationBySalaryChartOptions = computed<any>(() => {
+  if (!salaryStore.salaryDistributionByRange) {
+    return {}
+  }
+
+  const apiData = salaryStore.salaryDistributionByRange
+  const salaryRanges = apiData.salary_ranges || []
+  const educationLevels = apiData.education_levels || []
+  
+  // 定义学历顺序（从低到高）
+  const educationOrder = [
+    '其他', '初中及以下', '高中', '中专', '在校生',
+    '大专', '本科', '硕士', '博士', 'MBA/EMBA'
+  ]
+  
+  // 对学历进行排序
+  const sortedEducationIndices = [...Array(educationLevels.length).keys()]
+    .sort((a, b) => {
+      const indexA = educationOrder.indexOf(educationLevels[a])
+      const indexB = educationOrder.indexOf(educationLevels[b])
+      // 如果找不到在预定义顺序中的位置，放到最前面
+      return (indexA === -1 ? -1 : indexA) - (indexB === -1 ? -1 : indexB)
+    })
+  
+  // 按排序后的顺序重新组织学历数据
+  const sortedEducationLevels = sortedEducationIndices.map(i => educationLevels[i])
+  
+  const series = salaryRanges.map((range: string, rangeIndex: number) => ({
+    name: range,
+    type: 'bar' as const,
+    stack: 'total',
+    emphasis: {
+      focus: 'series'
+    },
+    data: sortedEducationIndices.map(eduIndex => {
+      // 确保 apiData.data[rangeIndex] 和 apiData.data[rangeIndex][eduIndex] 存在
+      return apiData.data?.[rangeIndex]?.[eduIndex]?.count || 0;
+    })
+  }))
+
+  return {
+    title: {
+      text: '按薪资区间分组的学历分布',
+      left: 'center'
+    },
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    legend: {
+      data: salaryRanges,
+      top: '10%',
+      type: 'scroll',
+      width: '80%'
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '8%',
+      top: '25%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: sortedEducationLevels,
+      axisLabel: {
+        interval: 0,
+        rotate: 30
+      }
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series
+  }
+})
+
 // 城市与学历交叉分析筛选器配置
 const cityEducationFilters = ref([
   {
@@ -308,7 +390,8 @@ const loadData = async () => {
   try {
     await Promise.all([
       educationStore.fetchEducationChartData(),
-      educationStore.fetchEducationSalaryData()
+      educationStore.fetchEducationSalaryData(),
+      salaryStore.fetchSalaryDistributionByRange()
     ])
   } catch (error) {
     console.error('加载学历分析数据失败', error)
@@ -316,7 +399,7 @@ const loadData = async () => {
 }
 
 // 导出数据为Excel
-const exportToExcel = (type: 'distribution' | 'salary') => {
+const exportToExcel = (type: 'distribution' | 'salary' | 'bySalaryRange') => {
   try {
     let data: any[] = []
     let fileName = ''
@@ -338,6 +421,48 @@ const exportToExcel = (type: 'distribution' | 'salary') => {
         '最高薪资': max_salaries[index]
       }))
       fileName = '不同学历薪资对比数据'
+    } else if (type === 'bySalaryRange' && salaryStore.salaryDistributionByRange) {
+      const apiData = salaryStore.salaryDistributionByRange
+      const salaryRanges = apiData.salary_ranges || []
+      const educationLevels = apiData.education_levels || []
+      
+      // 定义学历顺序（从低到高）
+      const educationOrder = [
+        '其他', '初中及以下', '高中', '中专', '在校生',
+        '大专', '本科', '硕士', '博士', 'MBA/EMBA'
+      ]
+      
+      // 对学历进行排序
+      const sortedEducationIndices = [...Array(educationLevels.length).keys()]
+        .sort((a, b) => {
+          const indexA = educationOrder.indexOf(educationLevels[a])
+          const indexB = educationOrder.indexOf(educationLevels[b])
+          // 如果找不到在预定义顺序中的位置，放到最前面
+          return (indexA === -1 ? -1 : indexA) - (indexB === -1 ? -1 : indexB)
+        })
+      
+      // 按排序后的顺序重新组织学历数据
+      const sortedEducationLevels = sortedEducationIndices.map(i => educationLevels[i])
+      
+      // 创建包含所有学历的表头（已排序）
+      const headerRow: Record<string, string> = { '薪资区间': '' }
+      sortedEducationLevels.forEach((edu: string) => {
+        headerRow[edu] = ''
+      })
+      
+      // 为每个薪资区间创建一行数据（学历已排序）
+      data = salaryRanges.map((range: string, rangeIndex: number) => {
+        const row: Record<string, string | number> = { '薪资区间': range }
+        
+        sortedEducationIndices.forEach((eduIndex: number, i: number) => {
+          const edu = sortedEducationLevels[i]
+          row[edu] = apiData.data?.[rangeIndex]?.[eduIndex]?.count || 0
+        })
+        
+        return row
+      })
+      
+      fileName = '按薪资区间分组的学历分布数据'
     }
 
     if (data.length > 0) {
@@ -463,6 +588,26 @@ onMounted(() => {
           </div>
         </div>
       </el-card>
+      
+      <!-- 按薪资区间分组的学历分布 -->
+      <el-card shadow="hover" class="mt-6">
+        <template #header>
+          <div class="flex justify-between items-center">
+            <span>按薪资区间分组的学历分布</span>
+            <el-button type="primary" size="small" @click="exportToExcel('bySalaryRange')" :disabled="!salaryStore.salaryDistributionByRange">
+              <el-icon><Download /></el-icon> 导出数据
+            </el-button>
+          </div>
+        </template>
+        <div class="h-96">
+          <LoadingState v-if="salaryStore.salaryDistributionByRangeLoading" :loading="true" />
+          <ErrorMessage v-else-if="salaryStore.salaryDistributionByRangeError" :error="salaryStore.salaryDistributionByRangeError" />
+          <BaseChart v-else-if="salaryStore.salaryDistributionByRange" :options="educationBySalaryChartOptions" height="100%" auto-resize />
+          <div v-else class="flex items-center justify-center h-full text-gray-400">
+            暂无按薪资区间分组的学历分布数据
+          </div>
+        </div>
+      </el-card>
     </div>
     
     <!-- 城市交叉分析视图 -->
@@ -507,7 +652,12 @@ onMounted(() => {
         <template #header>
           <div class="flex justify-between items-center">
             <span>城市与学历需求交叉分析</span>
+            <div class="flex items-center">
+              <el-button type="primary" size="small" @click="exportCityEducationData" :disabled="!educationStore.cityEducationData" class="mr-2">
+                <el-icon><Download /></el-icon> 导出数据
+              </el-button>
             <span class="text-sm text-gray-500">显示前 {{ cityLimitValue }} 个城市</span>
+            </div>
           </div>
         </template>
         <LoadingState :loading="educationStore.cityEducationLoading" skeleton>
@@ -523,6 +673,9 @@ onMounted(() => {
         <template #header>
           <div class="flex justify-between items-center">
             <span>学历需求城市分布热力图</span>
+            <el-button type="primary" size="small" @click="exportCityEducationData" :disabled="!educationStore.cityEducationData">
+              <el-icon><Download /></el-icon> 导出数据
+            </el-button>
           </div>
         </template>
         <LoadingState :loading="educationStore.cityEducationLoading" skeleton>

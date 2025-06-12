@@ -153,7 +153,8 @@ export const useEducationStore = defineStore('education', () => {
     return {
       title: {
         text: '学历需求城市分布热力图',
-        left: 'center'
+        left: 'center',
+        top: '3%'
       },
       tooltip: {
         position: 'top',
@@ -165,14 +166,19 @@ export const useEducationStore = defineStore('education', () => {
         }
       },
       grid: {
-        height: '70%',
-        top: '15%'
+        height: '60%',
+        top: '20%',
+        bottom: '20%'
       },
       xAxis: {
         type: 'category',
         data: education_levels,
         splitArea: {
           show: true
+        },
+        axisLabel: {
+          interval: 0,
+          rotate: 30
         }
       },
       yAxis: {
@@ -188,7 +194,7 @@ export const useEducationStore = defineStore('education', () => {
         calculable: true,
         orient: 'horizontal',
         left: 'center',
-        bottom: '5%'
+        top: '10%'
       },
       series: [{
         name: '学历需求占比',

@@ -496,6 +496,7 @@ const availableCities = computed(() => {
 })
 
 onMounted(async () => {
+  await cityStore.updateLimit(limitValue.value)
   await cityStore.fetchCityData()
 })
 </script>
