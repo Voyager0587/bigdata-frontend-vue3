@@ -77,6 +77,11 @@ onUnmounted(() => {
           <el-icon><OfficeBuilding /></el-icon>
           <template #title>公司分析</template>
         </el-menu-item>
+        
+        <el-menu-item index="/recommendation" class="menu-item">
+          <el-icon><Star /></el-icon>
+          <template #title>个性化推荐</template>
+        </el-menu-item>
       </el-menu>
     </el-aside>
     
