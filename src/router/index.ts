@@ -31,6 +31,14 @@ const routes: Array<RouteRecordRaw> = [
     name: 'CompanyAnalysis',
     component: () => import('../views/company-analysis/index.vue'),
     meta: { title: '公司分析' }
+  },
+  {
+    path: '/recommendation',
+    name: 'recommendation',
+    component: () => import('../views/PersonalizedRecommendation.vue'),
+    meta: {
+      title: '个性化推荐'
+    }
   }
 ]
 
